@@ -1,3 +1,7 @@
+"""
+A module that creates a worker to parse ICON contract events
+"""
+
 from json import dumps
 from random import randint
 from socket import gethostname
@@ -7,13 +11,9 @@ import psycopg2
 from confluent_kafka import Consumer, Producer
 from confluent_kafka.schema_registry.json_schema import JSONDeserializer, JSONSerializer
 from confluent_kafka.schema_registry.schema_registry_client import SchemaRegistryClient
-from confluent_kafka.serialization import (
-    MessageField,
-    SerializationContext,
-    StringSerializer,
-)
+from confluent_kafka.serialization import MessageField, SerializationContext
 from consumers import log_consume_loop, registration_consume_loop
-from pydantic import BaseModel, BaseSettings, Field
+from pydantic import BaseSettings, Field
 
 from iconcontractworker.bootstrap import init_state
 from iconcontractworker.schema import get_logs_schema, get_registrations_schema
@@ -41,12 +41,17 @@ class Settings(BaseSettings):
 
 s = Settings()
 
+# Kafka objects
+# Producer
+
 output_producer = Producer(
     {
         "bootstrap.servers": s.kafka_server,
         "compression.codec": s.kafka_compression,
     }
 )
+
+# Consumers (x2)
 
 logs_consumer = Consumer(
     {
@@ -64,8 +69,11 @@ registrations_consumer = Consumer(
     }
 )
 
+# Schema Registry client
 
 schema_client = SchemaRegistryClient({"url": s.schema_server})
+
+# Serializers
 
 logs_value_serializer = JSONSerializer(
     dumps(get_logs_schema(s.logs_topic)),
@@ -73,16 +81,23 @@ logs_value_serializer = JSONSerializer(
     conf={"auto.register.schemas": False},
 )
 
+# Deserializers
+
 logs_value_deserializer = JSONDeserializer(dumps(get_logs_schema(s.logs_topic)))
 
 registration_value_deserializer = JSONDeserializer(
     dumps(get_registrations_schema(s.registrations_topic))
 )
 
+# Message contexts
+
 registration_value_context = SerializationContext(
     s.registrations_topic, MessageField.VALUE
 )
+
 logs_value_context = SerializationContext(s.logs_topic, MessageField.VALUE)
+
+# Postgres connection objects
 
 con = psycopg2.connect(
     database=s.db_database,
@@ -92,8 +107,12 @@ con = psycopg2.connect(
     port=s.db_port,
 )
 
+# Init the registration state table
+
 registration_state_table = init_state(con)
 registration_state_lock = Lock()
+
+# Create & spawn the registration consumption thread
 
 registration_thread = Thread(
     target=registration_consume_loop,
@@ -107,6 +126,10 @@ registration_thread = Thread(
         registration_state_lock,
     ),
 )
+
+registration_thread.start()
+
+# Create & spawn the log consumption thread
 
 logs_thread = Thread(
     target=log_consume_loop,
@@ -123,5 +146,4 @@ logs_thread = Thread(
     ),
 )
 
-registration_thread.start()
 logs_thread.start()

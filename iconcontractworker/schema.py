@@ -8,7 +8,7 @@ logs_schema = {
             "transaction_index": {"type": "integer"},
             "address": {"type": "string"},
             "data": {
-                "type": ["array", "None"],
+                "type": ["array", "null"],
                 "items": {"type": "string"},
                 "default": None,
             },
