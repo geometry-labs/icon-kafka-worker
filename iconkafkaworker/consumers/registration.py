@@ -22,6 +22,7 @@ def registration_consume_loop(
     """
     The registration consumption loop.
 
+    :param reverse_search_dict:
     :param broadcaster_event_state:
     :param processing_mode:
     :param consumer: A Kafka consumer object
@@ -40,6 +41,9 @@ def registration_consume_loop(
     # Subscribe the consumer to the topic, and use the registration_on_assign callback to set the consumer to the end
     # of the topic
     consumer.subscribe(topics, on_assign=registration_on_assign)
+
+    if settings.processing_mode == Mode.TRANSACTION:
+        to_from_pairs_state, from_to_pairs_state = registration_state
 
     msg_count = 0
 
@@ -78,7 +82,8 @@ def registration_consume_loop(
                     msg,
                     value_deserializer,
                     value_context,
-                    registration_state,
+                    to_from_pairs_state,
+                    from_to_pairs_state,
                     broadcaster_event_state,
                     reverse_search_dict,
                     lock,
@@ -101,19 +106,21 @@ def registration_msg_transaction_mode_handler(
     msg,
     deserializer,
     context,
-    registration_state,
+    to_from_pairs_state,
+    from_to_pairs_state,
     broadcaster_event_state,
     reverse_search_dict,
     lock,
 ):
     """
 
+    :param from_to_pairs_state:
+    :param to_from_pairs_state:
     :param reverse_search_dict:
     :param broadcaster_event_state:
     :param msg:
     :param deserializer:
     :param context:
-    :param registration_state:
     :param lock:
     :return:
     """
@@ -142,13 +149,21 @@ def registration_msg_transaction_mode_handler(
 
             reverse_search_dict[reg_id] = (to_address, from_address)
 
-            if to_address not in registration_state:
-                registration_state[to_address] = {from_address: [reg_id]}
+            if to_address not in to_from_pairs_state:
+                to_from_pairs_state[to_address] = {from_address: [reg_id]}
             else:
-                if from_address not in registration_state[to_address]:
-                    registration_state[to_address][from_address] = [reg_id]
+                if from_address not in to_from_pairs_state[to_address]:
+                    to_from_pairs_state[to_address][from_address] = [reg_id]
                 else:
-                    registration_state[to_address][from_address].append(reg_id)
+                    to_from_pairs_state[to_address][from_address].append(reg_id)
+
+            if from_address not in from_to_pairs_state:
+                from_to_pairs_state[from_address] = {to_address: [reg_id]}
+            else:
+                if to_address not in from_to_pairs_state[to_address]:
+                    from_to_pairs_state[from_address][to_address] = [reg_id]
+                else:
+                    from_to_pairs_state[from_address][to_address].append(reg_id)
 
             # Release the lock to unblock and then we're done
             lock.release()
@@ -172,7 +187,8 @@ def registration_msg_transaction_mode_handler(
             lock.acquire()
 
             # remove from state
-            registration_state[to_address][from_address].remove(reg_id)
+            to_from_pairs_state[to_address][from_address].remove(reg_id)
+            from_to_pairs_state[from_address][to_address].remove(reg_id)
 
             # remove from reverse search
             del reverse_search_dict[reg_id]
@@ -204,6 +220,7 @@ def registration_msg_contract_mode_handler(
     """
     Handler for registration messages.
 
+    :param reverse_search_dict:
     :param broadcaster_event_state:
     :param msg: A Kakfa message object with the registration message content.
     :param deserializer: A Kafka deserializer object that is appropriate for the registration message value.

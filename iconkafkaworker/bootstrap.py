@@ -64,12 +64,15 @@ def init_tx_registration_state(con):
     # SQL query
     cur = con.cursor()
     cur.execute(
-        "SELECT reg_id, from_address, to_address, value FROM registrations WHERE type = 'trans'"
+        "SELECT reg_id, from_address, to_address, value FROM {} WHERE type = 'trans'".format(
+            settings.registrations_topic
+        )
     )
     rows = cur.fetchall()
 
     # Create & populate state dict
-    address_pairs_state = {}
+    to_from_pairs_state = {}
+    from_to_pairs_state = {}
     reverse_search = {}
 
     for (reg_id, from_address, to_address, _) in rows:
@@ -86,13 +89,23 @@ def init_tx_registration_state(con):
         else:
             tmp_to = to_address
 
-        if tmp_to not in address_pairs_state:
-            address_pairs_state[tmp_to] = {tmp_from: [reg_id]}
+        # Populate TO -> FROM state
+        if tmp_to not in to_from_pairs_state:
+            to_from_pairs_state[tmp_to] = {tmp_from: [reg_id]}
         else:
-            if tmp_from not in address_pairs_state[tmp_to]:
-                address_pairs_state[tmp_to][tmp_from] = [reg_id]
+            if tmp_from not in to_from_pairs_state[tmp_to]:
+                to_from_pairs_state[tmp_to][tmp_from] = [reg_id]
             else:
-                address_pairs_state[tmp_to][tmp_from].append(reg_id)
+                to_from_pairs_state[tmp_to][tmp_from].append(reg_id)
+
+        # Populate FROM -> TO state
+        if tmp_from not in from_to_pairs_state:
+            from_to_pairs_state[tmp_from] = {tmp_to: [reg_id]}
+        else:
+            if tmp_to not in from_to_pairs_state[tmp_from]:
+                from_to_pairs_state[tmp_from][tmp_to] = [reg_id]
+            else:
+                from_to_pairs_state[tmp_from][tmp_to].append(reg_id)
 
     broadcaster_events_pairs = {}
 
@@ -107,4 +120,8 @@ def init_tx_registration_state(con):
     for (broadcaster, event) in rows:
         broadcaster_events_pairs[event] = broadcaster
 
-    return address_pairs_state, broadcaster_events_pairs, reverse_search
+    return (
+        (to_from_pairs_state, from_to_pairs_state),
+        broadcaster_events_pairs,
+        reverse_search,
+    )

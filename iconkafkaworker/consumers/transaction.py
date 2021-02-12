@@ -1,4 +1,5 @@
 import sys
+from json import dumps
 
 from confluent_kafka import KafkaError, KafkaException
 
@@ -33,6 +34,8 @@ def transaction_consume_loop(
     # Do not need a callback since this will be part of a consumer group and we should let the broker handle assignments
     consumer.subscribe([consume_topic])
 
+    to_from_pairs_state, from_to_pairs_state = registration_state
+
     msg_count = 0
     while True:
         # Poll for a message
@@ -60,7 +63,8 @@ def transaction_consume_loop(
                 value_context,
                 producer,
                 produce_topic,
-                registration_state,
+                to_from_pairs_state,
+                from_to_pairs_state,
                 broadcaster_event_state,
                 lock,
             )
@@ -78,19 +82,21 @@ def transaction_msg_handler(
     context,
     producer,
     topic,
-    registration_state,
+    to_from_pairs_state,
+    from_to_pairs_state,
     broadcaster_event_state,
     lock,
 ):
     """
 
+    :param from_to_pairs_state:
+    :param to_from_pairs_state:
     :param broadcaster_event_state:
     :param msg:
     :param deserializer:
     :param context:
     :param producer:
     :param topic:
-    :param registration_state:
     :param lock:
     :return:
     """
@@ -110,23 +116,41 @@ def transaction_msg_handler(
     # Acquire state lock because we're going to start looking things up
     lock.acquire()
 
-    if to_address not in registration_state:
-        lock.release()
-        return
+    try:
+        exact_to_from_broadcasters = {
+            broadcaster_event_state[event]
+            for event in to_from_pairs_state[to_address][from_address]
+        }
+    except KeyError:
+        exact_to_from_broadcasters = set()
 
-    if from_address not in registration_state[to_address]:
-        lock.release()
-        return
+    try:
+        wildcard_to_broadcasters = {
+            broadcaster_event_state[event]
+            for event in to_from_pairs_state["*"][from_address]
+        }
+
+    except KeyError:
+        wildcard_to_broadcasters = set()
+
+    try:
+        wildcard_from_broadcasters = {
+            broadcaster_event_state[event]
+            for event in from_to_pairs_state["*"][to_address]
+        }
+
+    except KeyError:
+        wildcard_from_broadcasters = set()
 
     lock.release()
 
-    broadcasters = [
-        broadcaster_event_state[event]
-        for event in registration_state[to_address][from_address]
-    ]
-
-    producer.produce(
-        topic=topic,
-        key=bytes(str(broadcasters), "utf-8"),
-        value=value,
+    broadcasters = exact_to_from_broadcasters.union(wildcard_to_broadcasters).union(
+        wildcard_from_broadcasters
     )
+
+    if broadcasters:
+        producer.produce(
+            topic=topic,
+            key=bytes(str(list(broadcasters)), "utf-8"),
+            value=dumps(value),
+        )
