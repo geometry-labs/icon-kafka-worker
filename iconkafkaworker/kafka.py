@@ -33,8 +33,8 @@ from iconkafkaworker.settings import settings
 
 output_producer = Producer(
     {
-        "bootstrap.servers": settings.kafka_server,
-        "compression.codec": settings.kafka_compression,
+        "bootstrap.servers": settings.KAFKA_SERVER,
+        "compression.codec": settings.KAFKA_COMPRESSION,
     }
 )
 
@@ -42,58 +42,58 @@ output_producer = Producer(
 
 event_consumer = Consumer(
     {
-        "bootstrap.servers": settings.kafka_server,
-        "compression.codec": settings.kafka_compression,
-        "group.id": settings.consumer_group + "-" + str(settings.processing_mode),
+        "bootstrap.servers": settings.KAFKA_SERVER,
+        "compression.codec": settings.KAFKA_COMPRESSION,
+        "group.id": settings.CONSUMER_GROUP + "-" + str(settings.PROCESSING_MODE),
     }
 )
 
 registrations_consumer = Consumer(
     {
-        "bootstrap.servers": settings.kafka_server,
-        "compression.codec": settings.kafka_compression,
+        "bootstrap.servers": settings.KAFKA_SERVER,
+        "compression.codec": settings.KAFKA_COMPRESSION,
         "group.id": gethostname() + str(randint(0, 999)),
     }
 )
 
 # Schema Registry client
 
-schema_client = SchemaRegistryClient({"url": settings.schema_server})
+schema_client = SchemaRegistryClient({"url": settings.SCHEMA_SERVER})
 
 # Serializers
 
 logs_value_serializer = JSONSerializer(
-    dumps(get_logs_schema(settings.logs_topic)),
+    dumps(get_logs_schema(settings.LOGS_TOPIC)),
     schema_client,
     conf={"auto.register.schemas": False},
 )
 
 transactions_value_serializer = JSONSerializer(
-    dumps(get_transactions_schema(settings.transactions_topic)),
+    dumps(get_transactions_schema(settings.TRANSACTIONS_TOPIC)),
     schema_client,
     conf={"auto.register.schemas": False},
 )
 
 # Deserializers
 
-logs_value_deserializer = JSONDeserializer(dumps(get_logs_schema(settings.logs_topic)))
+logs_value_deserializer = JSONDeserializer(dumps(get_logs_schema(settings.LOGS_TOPIC)))
 
 transactions_value_deserializer = JSONDeserializer(
-    dumps(get_transactions_schema(settings.transactions_topic))
+    dumps(get_transactions_schema(settings.TRANSACTIONS_TOPIC))
 )
 
 registration_value_deserializer = JSONDeserializer(
-    dumps(get_registrations_schema(settings.registrations_topic))
+    dumps(get_registrations_schema(settings.REGISTRATIONS_TOPIC))
 )
 
 # Message contexts
 
 registration_value_context = SerializationContext(
-    settings.registrations_topic, MessageField.VALUE
+    settings.REGISTRATIONS_TOPIC, MessageField.VALUE
 )
 
-logs_value_context = SerializationContext(settings.logs_topic, MessageField.VALUE)
+logs_value_context = SerializationContext(settings.LOGS_TOPIC, MessageField.VALUE)
 
 transactions_value_context = SerializationContext(
-    settings.transactions_topic, MessageField.VALUE
+    settings.TRANSACTIONS_TOPIC, MessageField.VALUE
 )
