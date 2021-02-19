@@ -27,7 +27,7 @@ def init_log_registration_state(con):
     cur = con.cursor()
     cur.execute(
         "SELECT reg_id, to_address, keyword, position from {} WHERE type = 'logevent'".format(
-            settings.registrations_topic
+            settings.REGISTRATIONS_TOPIC
         )
     )
     rows = cur.fetchall()
@@ -56,7 +56,7 @@ def init_log_registration_state(con):
     cur = con.cursor()
     cur.execute(
         "SELECT broadcaster_id, event_id from {}".format(
-            settings.broadcaster_events_table
+            settings.BROADCASTER_EVENTS_TABLE
         )
     )
     rows = cur.fetchall()
@@ -79,7 +79,7 @@ def init_tx_registration_state(con):
     cur = con.cursor()
     cur.execute(
         "SELECT reg_id, from_address, to_address, value FROM {} WHERE type = 'trans'".format(
-            settings.registrations_topic
+            settings.REGISTRATIONS_TOPIC
         )
     )
     rows = cur.fetchall()
@@ -126,7 +126,7 @@ def init_tx_registration_state(con):
     cur = con.cursor()
     cur.execute(
         "SELECT broadcaster_id, event_id from {}".format(
-            settings.broadcaster_events_table
+            settings.BROADCASTER_EVENTS_TABLE
         )
     )
     rows = cur.fetchall()

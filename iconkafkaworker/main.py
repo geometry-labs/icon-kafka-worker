@@ -34,16 +34,16 @@ from iconkafkaworker.settings import Mode, settings
 # Postgres connection objects
 
 con = psycopg2.connect(
-    database=settings.db_database,
-    user=settings.db_user,
-    password=settings.db_password,
-    host=settings.db_server,
-    port=settings.db_port,
+    database=settings.POSTGRES_DATABASE,
+    user=settings.POSTGRES_USER,
+    password=settings.POSTGRES_PASSWORD,
+    host=settings.POSTGRES_SERVER,
+    port=settings.POSTGRES_PORT,
 )
 
 # Init the registration state table
 
-if settings.processing_mode == Mode.CONTRACT:
+if settings.PROCESSING_MODE == Mode.CONTRACT:
     (
         registration_state_table,
         broadcaster_events_table,
@@ -51,7 +51,7 @@ if settings.processing_mode == Mode.CONTRACT:
     ) = init_log_registration_state(con)
     registration_state_lock = Lock()
 
-elif settings.processing_mode == Mode.TRANSACTION:
+elif settings.PROCESSING_MODE == Mode.TRANSACTION:
     (
         registration_state_table,
         broadcaster_events_table,
@@ -62,7 +62,7 @@ elif settings.processing_mode == Mode.TRANSACTION:
 else:
     raise ValueError(
         "The provided processing mode, {}, is not valid.".format(
-            settings.processing_mode
+            settings.PROCESSING_MODE
         )
     )
 
@@ -71,10 +71,10 @@ else:
 registration_thread = Thread(
     target=registration_consume_loop,
     args=(
-        settings.processing_mode,
+        settings.PROCESSING_MODE,
         registrations_consumer,
-        [settings.registrations_topic, settings.broadcaster_events_topic],
-        settings.kafka_min_commit_count,
+        [settings.REGISTRATIONS_TOPIC, settings.BROADCASTER_EVENTS_TOPIC],
+        settings.KAFKA_MIN_COMMIT_COUNT,
         registration_value_deserializer,
         registration_value_context,
         registration_state_table,
@@ -87,17 +87,17 @@ registration_thread = Thread(
 registration_thread.start()
 
 # Create & spawn the log consumption thread
-if settings.processing_mode == Mode.CONTRACT:
+if settings.PROCESSING_MODE == Mode.CONTRACT:
     logs_thread = Thread(
         target=log_consume_loop,
         args=(
             event_consumer,
-            settings.logs_topic,
-            settings.kafka_min_commit_count,
+            settings.LOGS_TOPIC,
+            settings.KAFKA_MIN_COMMIT_COUNT,
             logs_value_deserializer,
             logs_value_context,
             output_producer,
-            settings.output_topic,
+            settings.OUTPUT_TOPIC,
             registration_state_table,
             broadcaster_events_table,
             registration_state_lock,
@@ -106,17 +106,17 @@ if settings.processing_mode == Mode.CONTRACT:
 
     logs_thread.start()
 
-if settings.processing_mode == Mode.TRANSACTION:
+if settings.PROCESSING_MODE == Mode.TRANSACTION:
     tx_thread = Thread(
         target=transaction_consume_loop,
         args=(
             event_consumer,
-            settings.transactions_topic,
-            settings.kafka_min_commit_count,
+            settings.TRANSACTIONS_TOPIC,
+            settings.KAFKA_MIN_COMMIT_COUNT,
             transactions_value_deserializer,
             transactions_value_context,
             output_producer,
-            settings.output_topic,
+            settings.OUTPUT_TOPIC,
             registration_state_table,
             broadcaster_events_table,
             registration_state_lock,

@@ -13,9 +13,11 @@
 #  limitations under the License.
 
 import sys
-from json import dumps
+from json import dumps, loads
 
 from confluent_kafka import KafkaError, KafkaException
+
+from iconkafkaworker.settings import settings
 
 
 def transaction_consume_loop(
@@ -115,7 +117,10 @@ def transaction_msg_handler(
     :return:
     """
     # We will always have a value, so we can just unpack it
-    value = deserializer(msg.value(), context)
+    if settings.SCHEMA_SERVER:
+        value = deserializer(msg.value(), context)
+    else:
+        value = loads(msg.value())
 
     if not value["from_address"]:
         from_address = "*"

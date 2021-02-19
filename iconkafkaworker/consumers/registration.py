@@ -56,7 +56,7 @@ def registration_consume_loop(
     # of the topic
     consumer.subscribe(topics, on_assign=registration_on_assign)
 
-    if settings.processing_mode == Mode.TRANSACTION:
+    if settings.PROCESSING_MODE == Mode.TRANSACTION:
         to_from_pairs_state, from_to_pairs_state = registration_state
 
     msg_count = 0
@@ -139,11 +139,14 @@ def registration_msg_transaction_mode_handler(
     :return:
     """
 
-    if msg.topic() == settings.registrations_topic:
+    if msg.topic() == settings.REGISTRATIONS_TOPIC:
         # Check to see if it is a registration (has a value) or a deregistration (has no value)
         if msg.value():
             # We have a value, so we will unpack it
-            value = deserializer(msg.value(), context)
+            if settings.SCHEMA_SERVER:
+                value = deserializer(msg.value(), context)
+            else:
+                value = loads(msg.value())
             reg_id = msg.key().decode("utf-8")
 
             # Acquire lock to make sure no log processing happens while we update
@@ -209,7 +212,7 @@ def registration_msg_transaction_mode_handler(
 
             lock.release()
 
-    if msg.topic() == settings.broadcaster_events_topic:
+    if msg.topic() == settings.BROADCASTER_EVENTS_TOPIC:
         value = loads(msg.value().decode("utf-8"))
         if value["active"]:
             lock.acquire()
@@ -245,12 +248,15 @@ def registration_msg_contract_mode_handler(
     :return: None
     """
 
-    if msg.topic() == settings.registrations_topic:
+    if msg.topic() == settings.REGISTRATIONS_TOPIC:
 
         # Check to see if it is a registration (has a value) or a deregistration (has no value)
         if msg.value():
             # We have a value, so we will unpack it
-            value = deserializer(msg.value(), context)
+            if settings.SCHEMA_SERVER:
+                value = deserializer(msg.value(), context)
+            else:
+                value = loads(msg.value())
 
             # Acquire lock to make sure no log processing happens while we update
             lock.acquire()
@@ -290,7 +296,7 @@ def registration_msg_contract_mode_handler(
 
             lock.release()
 
-    if msg.topic() == settings.broadcaster_events_topic:
+    if msg.topic() == settings.BROADCASTER_EVENTS_TOPIC:
         value = loads(msg.value().decode("utf-8"))
         if value["active"]:
             lock.acquire()

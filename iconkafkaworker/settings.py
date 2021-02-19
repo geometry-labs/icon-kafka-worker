@@ -12,9 +12,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import os
 from enum import Enum
 
-from pydantic import BaseSettings, Field
+from pydantic import BaseSettings
 
 
 class Mode(Enum):
@@ -23,33 +24,30 @@ class Mode(Enum):
 
 
 class Settings(BaseSettings):
-    kafka_server: str = Field(..., env="contract_worker_kafka_server")
-    consumer_group: str = Field("contract_worker", env="contract_worker_consumer_group")
-    schema_server: str = Field(..., env="contract_worker_schema_server")
-    kafka_compression: str = Field("gzip", env="contract_worker_kafka_compression")
-    kafka_min_commit_count: int = Field(
-        10, env="contract_worker_kafka_min_commit_count"
-    )
-    registrations_topic: str = Field(
-        "event_registrations", env="contract_worker_registrations_topic"
-    )
-    broadcaster_events_topic: str = Field(
-        "broadcaster_events", env="contract_worker_broadcaster_events_topic"
-    )
-    broadcaster_events_table: str = Field(
-        "broadcaster_registrations", env="contract_worker_broadcaster_events_table"
-    )
-    logs_topic: str = Field("logs", env="contract_worker_logs_topic")
-    transactions_topic: str = Field(
-        "transactions", env="contract_worker_transactions_topic"
-    )
-    output_topic: str = Field(..., env="contract_worker_output_topic")
-    db_server: str = Field(..., env="contract_worker_db_server")
-    db_port: int = Field(5432, env="contract_worker_db_port")
-    db_user: str = Field(..., env="contract_worker_db_user")
-    db_password: str = Field(..., env="contract_worker_db_password")
-    db_database: str = Field("postgres", env="contract_worker_db_database")
-    processing_mode: Mode = Field(Mode.CONTRACT, env="contract_worker_processing_mode")
+    KAFKA_SERVER: str
+    CONSUMER_GROUP: str = "contract_worker"
+    SCHEMA_SERVER: str = None
+    KAFKA_COMPRESSION: str = "gzip"
+    KAFKA_MIN_COMMIT_COUNT: int = 10
+    REGISTRATIONS_TOPIC: str = "event_registrations"
+    BROADCASTER_EVENTS_TOPIC: str = "broadcaster_events"
+    BROADCASTER_EVENTS_TABLE: str = "broadcaster_registrations"
+    LOGS_TOPIC: str = "logs"
+    TRANSACTIONS_TOPIC: str = "transactions"
+    OUTPUT_TOPIC: str
+    POSTGRES_SERVER: str
+    POSTGRES_PORT: int = 5432
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_DATABASE: str = "postgres"
+    PROCESSING_MODE: Mode = Mode.CONTRACT
+
+    class Config:
+        env_prefix = "CONTRACT_WORKER_"
+        case_sensitive = True
 
 
-settings = Settings()
+if os.environ.get("ENV_FILE", False):
+    settings = Settings(_env_file=os.environ.get("ENV_FILE"))
+else:
+    settings = Settings()
