@@ -143,7 +143,10 @@ def registration_msg_transaction_mode_handler(
         # Check to see if it is a registration (has a value) or a deregistration (has no value)
         if msg.value():
             # We have a value, so we will unpack it
-            value = deserializer(msg.value(), context)
+            if settings.SCHEMA_SERVER:
+                value = deserializer(msg.value(), context)
+            else:
+                value = loads(msg.value())
             reg_id = msg.key().decode("utf-8")
 
             # Acquire lock to make sure no log processing happens while we update
@@ -250,7 +253,10 @@ def registration_msg_contract_mode_handler(
         # Check to see if it is a registration (has a value) or a deregistration (has no value)
         if msg.value():
             # We have a value, so we will unpack it
-            value = deserializer(msg.value(), context)
+            if settings.SCHEMA_SERVER:
+                value = deserializer(msg.value(), context)
+            else:
+                value = loads(msg.value())
 
             # Acquire lock to make sure no log processing happens while we update
             lock.acquire()

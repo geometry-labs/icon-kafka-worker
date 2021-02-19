@@ -13,9 +13,11 @@
 #  limitations under the License.
 
 import sys
-from json import dumps
+from json import dumps, loads
 
 from confluent_kafka import KafkaError, KafkaException
+
+from iconkafkaworker.settings import settings
 
 
 def log_consume_loop(
@@ -121,7 +123,10 @@ def log_msg_handler(
     """
 
     # We will always have a value, so we can just unpack it
-    value = deserializer(msg.value(), context)
+    if settings.SCHEMA_SERVER:
+        value = deserializer(msg.value(), context)
+    else:
+        value = loads(msg.value())
 
     # Acquire state lock because we're going to start looking things up
     lock.acquire()

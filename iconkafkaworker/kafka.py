@@ -57,34 +57,44 @@ registrations_consumer = Consumer(
 )
 
 # Schema Registry client
+if settings.SCHEMA_SERVER:
 
-schema_client = SchemaRegistryClient({"url": settings.SCHEMA_SERVER})
+    schema_client = SchemaRegistryClient({"url": settings.SCHEMA_SERVER})
 
-# Serializers
+    # Serializers
 
-logs_value_serializer = JSONSerializer(
-    dumps(get_logs_schema(settings.LOGS_TOPIC)),
-    schema_client,
-    conf={"auto.register.schemas": False},
-)
+    logs_value_serializer = JSONSerializer(
+        dumps(get_logs_schema(settings.LOGS_TOPIC)),
+        schema_client,
+        conf={"auto.register.schemas": False},
+    )
 
-transactions_value_serializer = JSONSerializer(
-    dumps(get_transactions_schema(settings.TRANSACTIONS_TOPIC)),
-    schema_client,
-    conf={"auto.register.schemas": False},
-)
+    transactions_value_serializer = JSONSerializer(
+        dumps(get_transactions_schema(settings.TRANSACTIONS_TOPIC)),
+        schema_client,
+        conf={"auto.register.schemas": False},
+    )
 
-# Deserializers
+    # Deserializers
 
-logs_value_deserializer = JSONDeserializer(dumps(get_logs_schema(settings.LOGS_TOPIC)))
+    logs_value_deserializer = JSONDeserializer(
+        dumps(get_logs_schema(settings.LOGS_TOPIC))
+    )
 
-transactions_value_deserializer = JSONDeserializer(
-    dumps(get_transactions_schema(settings.TRANSACTIONS_TOPIC))
-)
+    transactions_value_deserializer = JSONDeserializer(
+        dumps(get_transactions_schema(settings.TRANSACTIONS_TOPIC))
+    )
 
-registration_value_deserializer = JSONDeserializer(
-    dumps(get_registrations_schema(settings.REGISTRATIONS_TOPIC))
-)
+    registration_value_deserializer = JSONDeserializer(
+        dumps(get_registrations_schema(settings.REGISTRATIONS_TOPIC))
+    )
+else:
+    schema_client = None
+    logs_value_serializer = None
+    transactions_value_serializer = None
+    logs_value_deserializer = None
+    transactions_value_deserializer = None
+    registration_value_deserializer = None
 
 # Message contexts
 

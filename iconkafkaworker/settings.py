@@ -26,7 +26,7 @@ class Mode(Enum):
 class Settings(BaseSettings):
     KAFKA_SERVER: str
     CONSUMER_GROUP: str = "contract_worker"
-    SCHEMA_SERVER: str
+    SCHEMA_SERVER: str = None
     KAFKA_COMPRESSION: str = "gzip"
     KAFKA_MIN_COMMIT_COUNT: int = 10
     REGISTRATIONS_TOPIC: str = "event_registrations"
@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     PROCESSING_MODE: Mode = Mode.CONTRACT
 
     class Config:
-        env_prefix = "CONTRACT_WORKER"
+        env_prefix = "CONTRACT_WORKER_"
         case_sensitive = True
 
 
