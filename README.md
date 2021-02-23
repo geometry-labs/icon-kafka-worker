@@ -8,8 +8,47 @@
 
 ## Getting Started
 
+### Docker Build
+
+To build container for production:
+
+```bash
+docker build --target prod -t icon-kafka-worker .
+```
+
+To build container for development/testing:
+
+```bash
+docker build --target test -t icon-kafka-worker .
+```
 
 ## Usage
+
+Docker container can be used either as a standalone worker or in a docker-compose stack.
+To use in a standalone configuration:
+
+```bash
+docker run icon-kafka-worker
+```
+
+Or in a docker-compose stack:
+
+```yaml
+filter-worker-transaction:
+image: geometrylabs/icon-kafka-worker:latest
+hostname: kakfa-worker-transaction
+environment:
+  CONTRACT_WORKER_KAFKA_SERVER: kafka:29092
+  CONTRACT_WORKER_SCHEMA_SERVER: http://schemaregistry:8081
+  CONTRACT_WORKER_CONSUMER_GROUP: filter-worker-transaction
+  CONTRACT_WORKER_POSTGRES_SERVER: postgres
+  CONTRACT_WORKER_POSTGRES_USER: postgres
+  CONTRACT_WORKER_POSTGRES_PASSWORD: password
+  CONTRACT_WORKER_OUTPUT_TOPIC: outputs
+  CONTRACT_WORKER_PROCESSING_MODE: transaction
+```
+
+Just be sure to set the corresponding environment variables to suit your configuration.
 
 ### Environment Variables
 | Variable                 | Default                   | Description                                                           |
