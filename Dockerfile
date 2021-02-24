@@ -13,3 +13,5 @@ ENV PATH=/root/.local/bin:$PATH
 
 FROM base as prod
 CMD [ "python", "./iconkafkaworker/main.py" ]
+
+FROM base as test
