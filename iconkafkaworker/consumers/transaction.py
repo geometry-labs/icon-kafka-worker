@@ -163,9 +163,11 @@ def transaction_msg_handler(
 
     lock.release()
 
-    broadcasters = exact_to_from_broadcasters.union(wildcard_to_broadcasters).union(
-        wildcard_from_broadcasters
-    )
+    broadcasters = set()
+
+    broadcasters.update(exact_to_from_broadcasters)
+    broadcasters.update(wildcard_to_broadcasters)
+    broadcasters.update(wildcard_from_broadcasters)
 
     if broadcasters:
         producer.produce(
