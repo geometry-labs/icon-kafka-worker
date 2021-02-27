@@ -70,6 +70,8 @@ Just be sure to set the corresponding environment variables to suit your configu
 | POSTGRES_PASSWORD        |                           | Postgres password                                                     |
 | POSTGRES_DATABASE        | postgres                  | Postgres database name                                                |
 | PROCESSING_MODE          | contract                  | Worker processing mode (contract/transaction)                         |
+| USE_SCHEMA_FOR_DATA      | False                     | Enable to use Schema Registry server for blockchain data              |
+
 ## License
 
 Distributed under the Apache 2.0 License. See `LICENSE` for more information.
