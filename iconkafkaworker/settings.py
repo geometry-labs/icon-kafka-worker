@@ -26,7 +26,7 @@ class Mode(Enum):
 class Settings(BaseSettings):
     KAFKA_SERVER: str
     CONSUMER_GROUP: str = "contract_worker"
-    SCHEMA_SERVER: str = None
+    SCHEMA_SERVER: str
     KAFKA_COMPRESSION: str = "gzip"
     KAFKA_MIN_COMMIT_COUNT: int = 10
     REGISTRATIONS_TOPIC: str = "event_registrations"
@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str
     POSTGRES_DATABASE: str = "postgres"
     PROCESSING_MODE: Mode = Mode.CONTRACT
+    USE_SCHEMA_FOR_DATA: bool = False
 
     class Config:
         env_prefix = "CONTRACT_WORKER_"

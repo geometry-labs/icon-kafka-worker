@@ -117,7 +117,7 @@ def transaction_msg_handler(
     :return:
     """
     # We will always have a value, so we can just unpack it
-    if settings.SCHEMA_SERVER:
+    if settings.USE_SCHEMA_FOR_DATA:
         value = deserializer(msg.value(), context)
     else:
         value = loads(msg.value())
