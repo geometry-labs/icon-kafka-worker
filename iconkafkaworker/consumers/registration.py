@@ -76,6 +76,9 @@ def registration_consume_loop(
                     "%% %s [%d] reached end at offset %d\n"
                     % (msg.topic(), msg.partition(), msg.offset())
                 )
+            if msg.error().code() == KafkaError.UNKNOWN_TOPIC_OR_PART:
+                sys.stderr.write("Kafka topic not ready. Restarting.")
+                sys.exit(1)
             # If there has been some other error, raise that
             elif msg.error():
                 raise KafkaException(msg.error())
