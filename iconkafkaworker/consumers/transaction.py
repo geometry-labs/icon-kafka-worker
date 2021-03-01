@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import os
 import sys
 from json import dumps, loads
 
@@ -70,7 +71,7 @@ def transaction_consume_loop(
                 )
             if msg.error().code() == KafkaError.UNKNOWN_TOPIC_OR_PART:
                 sys.stderr.write("Kafka topic not ready. Restarting.")
-                sys.exit(1)
+                os._exit(1)
             # If there has been some other error, raise that
             elif msg.error():
                 raise KafkaException(msg.error())
