@@ -250,10 +250,7 @@ def registration_msg_contract_mode_handler(
         # Check to see if it is a registration (has a value) or a deregistration (has no value)
         if msg.value():
             # We have a value, so we will unpack it
-            if settings.USE_SCHEMA_FOR_DATA:
-                value = deserializer(msg.value(), context)
-            else:
-                value = loads(msg.value())
+            value = deserializer(msg.value(), context)
 
             # Acquire lock to make sure no log processing happens while we update
             lock.acquire()
