@@ -173,7 +173,7 @@ def log_msg_handler(
 
         producer.produce(
             topic=topic,
-            key=bytes(str(broadcasters), "utf-8"),
+            key=bytes(dumps(broadcasters), "utf-8"),
             value=dumps(response_message),
         )
 

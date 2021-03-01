@@ -176,6 +176,6 @@ def transaction_msg_handler(
     if broadcasters:
         producer.produce(
             topic=topic,
-            key=bytes(str(list(broadcasters)), "utf-8"),
+            key=bytes(dumps(list(broadcasters)), "utf-8"),
             value=dumps(value),
         )
