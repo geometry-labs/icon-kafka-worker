@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import logging
 import os
 import sys
 from json import dumps, loads
@@ -47,8 +48,12 @@ def transaction_consume_loop(
     :param lock:
     :return:
     """
+
+    logging.info("Transaction consumer thread started")
+
     # Subscribe the consumer to the topic
     # Do not need a callback since this will be part of a consumer group and we should let the broker handle assignments
+
     consumer.subscribe([consume_topic])
 
     to_from_pairs_state, from_to_pairs_state = registration_state

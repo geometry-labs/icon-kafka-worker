@@ -12,6 +12,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import logging
+
 from iconkafkaworker.settings import settings
 
 
@@ -23,6 +25,9 @@ def init_log_registration_state(con):
     :rtype: dict
     """
 
+    logging.info("Initializing registration state tables")
+
+    logging.info("Retrieving registrations from SQL")
     # SQL query
     cur = con.cursor()
     cur.execute(
@@ -31,6 +36,8 @@ def init_log_registration_state(con):
         )
     )
     rows = cur.fetchall()
+
+    logging.info("Registrations retrieved from SQL")
 
     # Create & populate state dict
     log_events_state = {}
@@ -51,7 +58,11 @@ def init_log_registration_state(con):
                 else:
                     log_events_state[address][keyword][position].append(reg_id)
 
+    logging.info("Registration states initialized")
+
     broadcaster_events_pairs = {}
+
+    logging.info("Retrieving broadcaster/event pairs from SQL")
 
     cur = con.cursor()
     cur.execute(
@@ -61,8 +72,12 @@ def init_log_registration_state(con):
     )
     rows = cur.fetchall()
 
+    logging.info("Broadcaster/event pairs retrieved from SQL")
+
     for (broadcaster, event) in rows:
         broadcaster_events_pairs[event] = broadcaster
+
+    logging.info("Broadcaster/event pairs state initialized")
 
     return log_events_state, broadcaster_events_pairs, reverse_search
 
@@ -75,6 +90,10 @@ def init_tx_registration_state(con):
     :rtype: dict
     """
 
+    logging.info("Initializing registration state tables")
+
+    logging.info("Retrieving registrations from SQL")
+
     # SQL query
     cur = con.cursor()
     cur.execute(
@@ -83,6 +102,8 @@ def init_tx_registration_state(con):
         )
     )
     rows = cur.fetchall()
+
+    logging.info("Registrations retrieved from SQL")
 
     # Create & populate state dict
     to_from_pairs_state = {}
@@ -121,7 +142,11 @@ def init_tx_registration_state(con):
             else:
                 from_to_pairs_state[tmp_from][tmp_to].append(reg_id)
 
+    logging.info("Registration states initialized")
+
     broadcaster_events_pairs = {}
+
+    logging.info("Retrieving broadcaster/event pairs from SQL")
 
     cur = con.cursor()
     cur.execute(
@@ -131,8 +156,12 @@ def init_tx_registration_state(con):
     )
     rows = cur.fetchall()
 
+    logging.info("Broadcaster/event pairs retrieved from SQL")
+
     for (broadcaster, event) in rows:
         broadcaster_events_pairs[event] = broadcaster
+
+    logging.info("Broadcaster/event pairs state initialized")
 
     return (
         (to_from_pairs_state, from_to_pairs_state),
