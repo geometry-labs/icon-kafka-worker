@@ -17,6 +17,7 @@ A module that creates a worker to parse ICON contract events
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import logging
 from threading import Lock, Thread
 
 import psycopg2
@@ -31,6 +32,12 @@ from iconkafkaworker.consumers.transaction import transaction_consume_loop
 from iconkafkaworker.kafka import *
 from iconkafkaworker.settings import Mode, settings
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s :: %(levelname)s :: %(message)s"
+)
+
+logging.info("ICON Kafka Worker is starting up...")
+
 # Postgres connection objects
 
 con = psycopg2.connect(
@@ -44,19 +51,23 @@ con = psycopg2.connect(
 # Init the registration state table
 
 if settings.PROCESSING_MODE == Mode.CONTRACT:
+    logging.info("Worker is in CONTRACT MODE")
     (
         registration_state_table,
         broadcaster_events_table,
         reverse_search_dict,
     ) = init_log_registration_state(con)
+    logging.info("Local states are initialized")
     registration_state_lock = Lock()
 
 elif settings.PROCESSING_MODE == Mode.TRANSACTION:
+    logging.info("Worker is in TRANSACTION MODE")
     (
         registration_state_table,
         broadcaster_events_table,
         reverse_search_dict,
     ) = init_tx_registration_state(con)
+    logging.info("Local states are initialized")
     registration_state_lock = Lock()
 
 else:
@@ -67,6 +78,8 @@ else:
     )
 
 # Create & spawn the registration consumption thread
+
+logging.info("Spawning registration thread...")
 
 registration_thread = Thread(
     target=registration_consume_loop,
@@ -88,6 +101,8 @@ registration_thread.start()
 
 # Create & spawn the log consumption thread
 if settings.PROCESSING_MODE == Mode.CONTRACT:
+    logging.info("Spawning processing thread...")
+
     logs_thread = Thread(
         target=log_consume_loop,
         args=(
@@ -107,6 +122,7 @@ if settings.PROCESSING_MODE == Mode.CONTRACT:
     logs_thread.start()
 
 if settings.PROCESSING_MODE == Mode.TRANSACTION:
+    logging.info("Spawning processing thread...")
     tx_thread = Thread(
         target=transaction_consume_loop,
         args=(

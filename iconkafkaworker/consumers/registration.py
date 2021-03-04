@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import logging
 import os
 import sys
 from json import loads
@@ -52,6 +53,8 @@ def registration_consume_loop(
     :param lock: The shared lock object between the two consumption threads
     :return: None
     """
+
+    logging.info("Registration consumer thread started")
 
     # Subscribe the consumer to the topic, and use the registration_on_assign callback to set the consumer to the end
     # of the topic
