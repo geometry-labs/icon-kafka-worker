@@ -85,7 +85,6 @@ registration_thread = Thread(
     target=registration_consume_loop,
     args=(
         settings.PROCESSING_MODE,
-        registrations_consumer,
         [settings.REGISTRATIONS_TOPIC, settings.BROADCASTER_EVENTS_TOPIC],
         settings.KAFKA_MIN_COMMIT_COUNT,
         registration_value_deserializer,
@@ -106,12 +105,10 @@ if settings.PROCESSING_MODE == Mode.CONTRACT:
     logs_thread = Thread(
         target=log_consume_loop,
         args=(
-            event_consumer,
             settings.LOGS_TOPIC,
             settings.KAFKA_MIN_COMMIT_COUNT,
             logs_value_deserializer,
             logs_value_context,
-            output_producer,
             settings.OUTPUT_TOPIC,
             registration_state_table,
             broadcaster_events_table,
@@ -126,12 +123,10 @@ if settings.PROCESSING_MODE == Mode.TRANSACTION:
     tx_thread = Thread(
         target=transaction_consume_loop,
         args=(
-            event_consumer,
             settings.TRANSACTIONS_TOPIC,
             settings.KAFKA_MIN_COMMIT_COUNT,
             transactions_value_deserializer,
             transactions_value_context,
-            output_producer,
             settings.OUTPUT_TOPIC,
             registration_state_table,
             broadcaster_events_table,

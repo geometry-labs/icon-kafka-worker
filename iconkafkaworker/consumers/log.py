@@ -17,18 +17,16 @@ import os
 import sys
 from json import dumps, loads
 
-from confluent_kafka import KafkaError, KafkaException
+from confluent_kafka import Consumer, KafkaError, KafkaException, Producer
 
 from iconkafkaworker.settings import settings
 
 
 def log_consume_loop(
-    consumer,
     consume_topic,
     min_commit,
     value_deserializer,
     value_context,
-    producer,
     produce_topic,
     registration_state,
     broadcaster_event_state,
@@ -38,14 +36,12 @@ def log_consume_loop(
     The log consumption loop.
 
     :param broadcaster_event_state:
-    :param consumer: A Kafka consumer object.
     :param consume_topic: The logs topic.
     :type consume_topic: str
     :param min_commit: The minimum number of messages to process before forcing the consumer to send a commit message.
     :type min_commit: int
     :param value_deserializer: A Kafka deserializer object that is appropriate for the registration message value.
     :param value_context: A Kafka SerializationContext object that is appropriate for the topic and field.
-    :param producer: A Kafka producer object.
     :param produce_topic: The output topic for processed logs.
     :type produce_topic: str
     :param registration_state: The registration state.
@@ -55,6 +51,25 @@ def log_consume_loop(
     """
 
     logging.info("Log consumer thread started")
+
+    logging.info("Creating log consumer")
+
+    consumer = Consumer(
+        {
+            "bootstrap.servers": settings.KAFKA_SERVER,
+            "compression.codec": settings.KAFKA_COMPRESSION,
+            "group.id": settings.CONSUMER_GROUP + "-" + str(settings.PROCESSING_MODE),
+        }
+    )
+
+    logging.info("Creating log producer")
+
+    producer = Producer(
+        {
+            "bootstrap.servers": settings.KAFKA_SERVER,
+            "compression.codec": settings.KAFKA_COMPRESSION,
+        }
+    )
 
     # Subscribe the consumer to the topic
     # Do not need a callback since this will be part of a consumer group and we should let the broker handle assignments

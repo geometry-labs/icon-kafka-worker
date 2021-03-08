@@ -17,18 +17,16 @@ import os
 import sys
 from json import dumps, loads
 
-from confluent_kafka import KafkaError, KafkaException
+from confluent_kafka import Consumer, KafkaError, KafkaException, Producer
 
 from iconkafkaworker.settings import settings
 
 
 def transaction_consume_loop(
-    consumer,
     consume_topic,
     min_commit,
     value_deserializer,
     value_context,
-    producer,
     produce_topic,
     registration_state,
     broadcaster_event_state,
@@ -37,12 +35,10 @@ def transaction_consume_loop(
     """
 
     :param broadcaster_event_state:
-    :param consumer:
     :param consume_topic:
     :param min_commit:
     :param value_deserializer:
     :param value_context:
-    :param producer:
     :param produce_topic:
     :param registration_state:
     :param lock:
@@ -50,6 +46,25 @@ def transaction_consume_loop(
     """
 
     logging.info("Transaction consumer thread started")
+
+    logging.info("Creating transaction consumer")
+
+    consumer = Consumer(
+        {
+            "bootstrap.servers": settings.KAFKA_SERVER,
+            "compression.codec": settings.KAFKA_COMPRESSION,
+            "group.id": settings.CONSUMER_GROUP + "-" + str(settings.PROCESSING_MODE),
+        }
+    )
+
+    logging.info("Creating transaction producer")
+
+    producer = Producer(
+        {
+            "bootstrap.servers": settings.KAFKA_SERVER,
+            "compression.codec": settings.KAFKA_COMPRESSION,
+        }
+    )
 
     # Subscribe the consumer to the topic
     # Do not need a callback since this will be part of a consumer group and we should let the broker handle assignments

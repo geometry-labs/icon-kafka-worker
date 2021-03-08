@@ -16,8 +16,10 @@ import logging
 import os
 import sys
 from json import loads
+from random import randint
+from socket import gethostname
 
-from confluent_kafka import KafkaError, KafkaException
+from confluent_kafka import Consumer, KafkaError, KafkaException
 
 from iconkafkaworker.consumers.utils import registration_on_assign
 from iconkafkaworker.settings import Mode, settings
@@ -25,7 +27,6 @@ from iconkafkaworker.settings import Mode, settings
 
 def registration_consume_loop(
     processing_mode,
-    consumer,
     topics,
     min_commit,
     value_deserializer,
@@ -41,7 +42,6 @@ def registration_consume_loop(
     :param reverse_search_dict:
     :param broadcaster_event_state:
     :param processing_mode:
-    :param consumer: A Kafka consumer object
     :param topics: List of registration-related topics. Must include the registration events and broadcaster events topics.
     :type topics: List[str]
     :param min_commit: The minimum number of messages to process before forcing the consumer to send a commit message
@@ -55,6 +55,16 @@ def registration_consume_loop(
     """
 
     logging.info("Registration consumer thread started")
+
+    logging.info("Creating registration consumer")
+
+    consumer = Consumer(
+        {
+            "bootstrap.servers": settings.KAFKA_SERVER,
+            "compression.codec": settings.KAFKA_COMPRESSION,
+            "group.id": gethostname() + str(randint(0, 999)),
+        }
+    )
 
     # Subscribe the consumer to the topic, and use the registration_on_assign callback to set the consumer to the end
     # of the topic
