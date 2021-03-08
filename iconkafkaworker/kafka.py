@@ -13,8 +13,6 @@
 #  limitations under the License.
 
 from json import dumps
-from random import randint
-from socket import gethostname
 
 from confluent_kafka import Consumer, Producer
 from confluent_kafka.schema_registry.json_schema import JSONDeserializer, JSONSerializer
@@ -29,32 +27,6 @@ from iconkafkaworker.schema import (
 from iconkafkaworker.settings import settings
 
 # Kafka objects
-# Producer
-
-output_producer = Producer(
-    {
-        "bootstrap.servers": settings.KAFKA_SERVER,
-        "compression.codec": settings.KAFKA_COMPRESSION,
-    }
-)
-
-# Consumers
-
-event_consumer = Consumer(
-    {
-        "bootstrap.servers": settings.KAFKA_SERVER,
-        "compression.codec": settings.KAFKA_COMPRESSION,
-        "group.id": settings.CONSUMER_GROUP + "-" + str(settings.PROCESSING_MODE),
-    }
-)
-
-registrations_consumer = Consumer(
-    {
-        "bootstrap.servers": settings.KAFKA_SERVER,
-        "compression.codec": settings.KAFKA_COMPRESSION,
-        "group.id": gethostname() + str(randint(0, 999)),
-    }
-)
 
 # Schema Registry client
 schema_client = SchemaRegistryClient({"url": settings.SCHEMA_SERVER})
